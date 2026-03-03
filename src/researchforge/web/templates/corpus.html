@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Corpus — ResearchForge{% endblock %}
+{% block content %}
+<h2>Knowledge Corpus</h2>
+
+<div class="stats-grid" hx-get="/api/corpus/stats" hx-trigger="load" hx-swap="innerHTML" id="corpus-stats">
+    <div class="card stat-card">
+        <div class="stat-value">-</div>
+        <div class="stat-label">Documents</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">-</div>
+        <div class="stat-label">Chunks</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Upload Document</h3>
+    <form hx-post="/api/corpus/ingest"
+          hx-target="#upload-result"
+          hx-encoding="multipart/form-data"
+          class="mt-1">
+        <input type="file" name="file" accept=".pdf,.md,.markdown,.txt,.html" required>
+        <button type="submit" class="btn btn-primary mt-1">Upload & Ingest</button>
+    </form>
+    <div id="upload-result" class="mt-1"></div>
+</div>
+
+<div class="card mt-2">
+    <h3>Search Corpus</h3>
+    <div class="search-box mt-1">
+        <input type="text"
+               name="q"
+               placeholder="Search the knowledge base..."
+               hx-get="/api/corpus/search"
+               hx-trigger="keyup changed delay:300ms"
+               hx-target="#search-results"
+               hx-include="this">
+    </div>
+    <div id="search-results"></div>
+</div>
+{% endblock %}

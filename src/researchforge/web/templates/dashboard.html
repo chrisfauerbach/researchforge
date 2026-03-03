@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Research — ResearchForge{% endblock %}
+{% block content %}
+<h2>Research</h2>
+
+<div class="card">
+    <form hx-post="/api/research" hx-target="#pipelines" hx-swap="afterbegin" hx-indicator="#submit-spinner">
+        <div class="form-group">
+            <label for="question">Research Question</label>
+            <textarea id="question" name="question" placeholder="What would you like to research?" required></textarea>
+        </div>
+        <div class="form-group">
+            <label for="depth">Depth</label>
+            <select id="depth" name="depth">
+                <option value="standard">Standard (with Critic review)</option>
+                <option value="quick">Quick (skip Critic)</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Start Research</button>
+        <span id="submit-spinner" class="htmx-indicator text-muted text-sm"> Starting pipeline...</span>
+    </form>
+</div>
+
+<h3 class="mt-2">Active & Recent Pipelines</h3>
+<div id="pipelines"
+     hx-get="/api/pipelines"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+    <p class="text-muted text-sm">Loading...</p>
+</div>
+{% endblock %}

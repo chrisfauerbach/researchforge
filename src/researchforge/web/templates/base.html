@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ResearchForge{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="/static/htmx.min.js"></script>
+    <script src="/static/htmx-sse.js"></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <h1>ResearchForge</h1>
+        <nav>
+            <a href="/" class="{% if active_page == 'research' %}active{% endif %}">Research</a>
+            <a href="/briefings" class="{% if active_page == 'briefings' %}active{% endif %}">Briefings</a>
+            <a href="/corpus" class="{% if active_page == 'corpus' %}active{% endif %}">Corpus</a>
+        </nav>
+    </aside>
+    <main class="main">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

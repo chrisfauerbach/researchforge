@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Briefing — ResearchForge{% endblock %}
+{% block content %}
+<div class="mb-1">
+    <a href="/briefings" class="text-muted text-sm">&larr; Back to Briefings</a>
+</div>
+
+<div class="card">
+    <h3>{{ briefing.research_question }}</h3>
+    <div class="text-sm text-muted mt-1">
+        <span class="badge badge-{{ 'success' if briefing.status == 'completed' else 'error' }}">
+            {{ briefing.status }}
+        </span>
+        &middot; {{ briefing.started_at[:16] }}
+        {% if briefing.completed_at %}
+        &middot; completed {{ briefing.completed_at[:16] }}
+        {% endif %}
+    </div>
+</div>
+
+{% if briefing_html %}
+<div class="card briefing-content">
+    {{ briefing_html|safe }}
+</div>
+{% else %}
+<div class="card">
+    <p class="text-muted">No briefing content available.</p>
+</div>
+{% endif %}
+
+{% if trace %}
+<details class="card">
+    <summary style="cursor:pointer;font-weight:600;">Pipeline Trace</summary>
+    <div class="trace-details mt-1">
+        {% for entry in trace %}
+        <div class="trace-entry">
+            <span class="stage {% if entry.status == 'success' %}done{% elif entry.status == 'error' %}error{% else %}active{% endif %}">
+                {{ entry.agent|capitalize }}
+            </span>
+            <span class="text-sm">{{ entry.model }}</span>
+            <span class="text-sm text-muted">{{ entry.duration_ms }}ms</span>
+            <span class="text-sm">
+                {% if entry.fallback_used %}<span class="badge badge-warning">fallback</span>{% endif %}
+                {% if entry.status == 'error' %}<span class="badge badge-error">error</span>{% endif %}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</details>
+{% endif %}
+{% endblock %}

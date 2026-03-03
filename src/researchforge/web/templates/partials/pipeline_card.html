@@ -1,0 +1,29 @@
+<div class="card pipeline-card {{ status }}"
+     id="pipeline-{{ job_id }}"
+     {% if status == 'running' %}
+     hx-ext="sse"
+     sse-connect="/api/pipelines/{{ job_id }}/stream"
+     sse-swap="stage_update"
+     sse-close="pipeline_complete"
+     {% endif %}>
+    <h3>{{ question|truncate(80) }}</h3>
+    <div class="pipeline-stages">
+        {% for stage_name in ['planner', 'gatherer', 'analyst', 'critic', 'writer'] %}
+        <span class="stage
+            {% if stage_name in completed_stages %}done{% endif %}
+            {% if stage_name == current_stage %}active{% endif %}
+            {% if stage_name in error_stages %}error{% endif %}">
+            {% if stage_name in completed_stages %}&#10003;{% elif stage_name == current_stage %}&#9711;{% else %}&#183;{% endif %}
+            {{ stage_name|capitalize }}
+        </span>
+        {% endfor %}
+    </div>
+    <div class="text-sm text-muted">
+        <span class="badge badge-{{ 'success' if status == 'completed' else 'warning' if status == 'running' else 'error' }}">
+            {{ status }}
+        </span>
+        {% if briefing_id and status == 'completed' %}
+        <a href="/briefings/{{ briefing_id }}" class="btn btn-secondary" style="margin-left:0.5rem;padding:0.2rem 0.6rem;font-size:0.8rem;">View Briefing</a>
+        {% endif %}
+    </div>
+</div>

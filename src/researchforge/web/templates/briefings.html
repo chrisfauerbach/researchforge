@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Briefings — ResearchForge{% endblock %}
+{% block content %}
+<h2>Briefings</h2>
+
+{% if briefings %}
+<table>
+    <thead>
+        <tr>
+            <th>Question</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in briefings %}
+        <tr>
+            <td>{{ b.research_question|truncate(60) }}</td>
+            <td>
+                <span class="badge badge-{{ 'success' if b.status == 'completed' else 'warning' if b.status == 'running' else 'error' }}">
+                    {{ b.status }}
+                </span>
+            </td>
+            <td class="text-muted text-sm">{{ b.started_at[:16] }}</td>
+            <td>
+                {% if b.status == 'completed' %}
+                <a href="/briefings/{{ b.briefing_id }}" class="btn btn-secondary" style="padding:0.2rem 0.6rem;font-size:0.8rem;">View</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p class="text-muted">No briefings yet. Start a research pipeline to generate one.</p>
+{% endif %}
+{% endblock %}

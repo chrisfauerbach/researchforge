@@ -1,0 +1,15 @@
+{% if results %}
+{% for chunk in results %}
+<div class="card" style="padding:0.75rem;">
+    <div class="text-sm">
+        <strong>{{ chunk.source_path }}</strong>
+        {% if chunk.section_h1 %}
+        <span class="text-muted"> &gt; {{ chunk.section_h1 }}</span>
+        {% endif %}
+    </div>
+    <p class="text-sm mt-1" style="line-height:1.5;">{{ chunk.text[:300] }}{% if chunk.text|length > 300 %}...{% endif %}</p>
+</div>
+{% endfor %}
+{% elif query %}
+<p class="text-muted text-sm">No results found for "{{ query }}".</p>
+{% endif %}
