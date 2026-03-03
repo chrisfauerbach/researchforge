@@ -72,10 +72,12 @@ def create_app() -> FastAPI:
     # Register route modules
     from researchforge.web.routes.briefings import router as briefings_router
     from researchforge.web.routes.corpus import router as corpus_router
+    from researchforge.web.routes.eval import router as eval_router
     from researchforge.web.routes.research import router as research_router
 
     app.include_router(research_router)
     app.include_router(briefings_router)
     app.include_router(corpus_router)
+    app.include_router(eval_router)
 
     return app

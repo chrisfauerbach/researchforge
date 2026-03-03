@@ -8,7 +8,7 @@ from pathlib import Path
 
 import aiosqlite
 
-from researchforge.db.models import SCHEMA_SQL
+from researchforge.db.models import MIGRATION_SQL, SCHEMA_SQL
 
 
 class Repository:
@@ -24,6 +24,13 @@ class Repository:
         self._db = await aiosqlite.connect(str(self.db_path))
         self._db.row_factory = aiosqlite.Row
         await self._db.executescript(SCHEMA_SQL)
+        await self._db.commit()
+        # Run migrations (ignore errors for already-existing columns)
+        for sql in MIGRATION_SQL:
+            try:
+                await self._db.execute(sql)
+            except Exception:
+                pass  # Column already exists
         await self._db.commit()
 
     async def close(self) -> None:
@@ -181,3 +188,56 @@ class Repository:
             rows,
         )
         await self.db.commit()
+
+    # --- Human scoring ---
+
+    async def set_human_score(
+        self,
+        briefing_id: str,
+        score: int,
+        feedback: str = "",
+    ) -> None:
+        """Record a human quality score for a briefing.
+
+        Args:
+            briefing_id: The briefing to score.
+            score: 1 (thumbs up) or -1 (thumbs down).
+            feedback: Optional text feedback.
+        """
+        await self.db.execute(
+            "UPDATE briefings SET human_score = ?, human_feedback = ? WHERE briefing_id = ?",
+            (score, feedback, briefing_id),
+        )
+        await self.db.commit()
+
+    # --- Eval results ---
+
+    async def insert_eval_result(
+        self,
+        eval_id: str,
+        eval_type: str,
+        scores_json: str,
+        regressions_json: str = "[]",
+    ) -> None:
+        await self.db.execute(
+            """INSERT INTO eval_results
+               (eval_id, eval_type, timestamp, scores_json, regressions_json)
+               VALUES (?, ?, ?, ?, ?)""",
+            (eval_id, eval_type, datetime.now(UTC).isoformat(), scores_json, regressions_json),
+        )
+        await self.db.commit()
+
+    async def list_eval_results(
+        self, eval_type: str | None = None, limit: int = 20
+    ) -> list[dict]:
+        if eval_type:
+            cursor = await self.db.execute(
+                "SELECT * FROM eval_results WHERE eval_type = ? ORDER BY timestamp DESC LIMIT ?",
+                (eval_type, limit),
+            )
+        else:
+            cursor = await self.db.execute(
+                "SELECT * FROM eval_results ORDER BY timestamp DESC LIMIT ?", (limit,)
+            )
+        rows = await cursor.fetchall()
+        return [dict(r) for r in rows]

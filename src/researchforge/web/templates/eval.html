@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Eval Dashboard — ResearchForge{% endblock %}
+{% block content %}
+<h2>Evaluation Dashboard</h2>
+
+<!-- Retrieval Quality -->
+<div class="card">
+    <h3>Retrieval Quality</h3>
+    {% if retrieval_scores %}
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Precision@5</th>
+                <th>Recall@5</th>
+                <th>MRR</th>
+                <th>Cases</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in retrieval_scores|reverse %}
+            <tr>
+                <td class="text-sm">{{ s.timestamp[:16] }}</td>
+                <td>
+                    <div class="score-bar-container">
+                        <div class="score-bar" style="width: {{ (s.mean_precision_at_k * 100)|int }}%"></div>
+                        <span>{{ "%.3f"|format(s.mean_precision_at_k) }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="score-bar-container">
+                        <div class="score-bar" style="width: {{ (s.mean_recall_at_k * 100)|int }}%"></div>
+                        <span>{{ "%.3f"|format(s.mean_recall_at_k) }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="score-bar-container">
+                        <div class="score-bar" style="width: {{ (s.mean_mrr * 100)|int }}%"></div>
+                        <span>{{ "%.3f"|format(s.mean_mrr) }}</span>
+                    </div>
+                </td>
+                <td>{{ s.case_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted text-sm">No retrieval eval results yet. Run: <code>researchforge eval run</code></p>
+    {% endif %}
+</div>
+
+<!-- Agent Scores -->
+<div class="card">
+    <h3>Agent Scores</h3>
+    {% if agent_scores %}
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Agent</th>
+                <th>Score</th>
+                <th>Cases</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in agent_scores|reverse %}
+            {% for role in ['writer', 'planner', 'analyst', 'critic', 'gatherer'] %}
+            {% if s.get(role) %}
+            <tr>
+                <td class="text-sm">{{ s.timestamp[:16] }}</td>
+                <td>{{ role|capitalize }}</td>
+                <td>
+                    <div class="score-bar-container">
+                        <div class="score-bar" style="width: {{ (s[role].mean_score * 100)|int }}%"></div>
+                        <span>{{ "%.3f"|format(s[role].mean_score) }}</span>
+                    </div>
+                </td>
+                <td>{{ s[role].case_count }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted text-sm">No agent eval results yet. Run: <code>researchforge eval run</code></p>
+    {% endif %}
+</div>
+
+<!-- E2E Scores -->
+<div class="card">
+    <h3>End-to-End Quality</h3>
+    {% if e2e_scores %}
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Mean Score</th>
+                <th>Cases</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in e2e_scores|reverse %}
+            <tr>
+                <td class="text-sm">{{ s.timestamp[:16] }}</td>
+                <td>
+                    <div class="score-bar-container">
+                        <div class="score-bar" style="width: {{ (s.mean_score * 100)|int }}%"></div>
+                        <span>{{ "%.3f"|format(s.mean_score) }}</span>
+                    </div>
+                </td>
+                <td>{{ s.case_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted text-sm">No E2E eval results yet. Run: <code>researchforge eval run</code></p>
+    {% endif %}
+</div>
+
+<!-- Human Scoring -->
+<div class="card">
+    <h3>Human Scoring</h3>
+    {% if briefings %}
+    <table>
+        <thead>
+            <tr>
+                <th>Question</th>
+                <th>Quality</th>
+                <th>Human Score</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in briefings %}
+            <tr>
+                <td>
+                    <a href="/briefings/{{ b.briefing_id }}">
+                        {{ b.research_question[:60] }}{% if b.research_question|length > 60 %}...{% endif %}
+                    </a>
+                </td>
+                <td>
+                    {% if b.quality_score %}
+                    <span class="badge badge-{% if b.quality_score >= 0.6 %}success{% elif b.quality_score >= 0.4 %}warning{% else %}error{% endif %}">
+                        {{ "%.2f"|format(b.quality_score) }}
+                    </span>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td id="score-{{ b.briefing_id }}">
+                    {% if b.human_score == 1 %}
+                    <span class="badge badge-success">Thumbs up</span>
+                    {% elif b.human_score == -1 %}
+                    <span class="badge badge-error">Thumbs down</span>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form style="display:inline"
+                          hx-post="/api/briefings/{{ b.briefing_id }}/score"
+                          hx-target="#score-{{ b.briefing_id }}"
+                          hx-swap="innerHTML">
+                        <input type="hidden" name="score" value="1">
+                        <button type="submit" class="btn btn-sm" title="Thumbs up">+</button>
+                    </form>
+                    <form style="display:inline"
+                          hx-post="/api/briefings/{{ b.briefing_id }}/score"
+                          hx-target="#score-{{ b.briefing_id }}"
+                          hx-swap="innerHTML">
+                        <input type="hidden" name="score" value="-1">
+                        <button type="submit" class="btn btn-sm" title="Thumbs down">-</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted text-sm">No completed briefings to score.</p>
+    {% endif %}
+</div>
+{% endblock %}

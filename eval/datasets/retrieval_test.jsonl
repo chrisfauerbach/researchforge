@@ -1,0 +1,20 @@
+{"question": "What is retrieval augmented generation?", "expected_keywords": ["retrieval", "augmented", "generation", "RAG"], "topic": "rag_basics"}
+{"question": "How does vector similarity search work?", "expected_keywords": ["vector", "similarity", "embedding", "cosine"], "topic": "vector_search"}
+{"question": "What are the benefits of RAG over fine-tuning?", "expected_keywords": ["RAG", "fine-tuning", "hallucination", "grounding"], "topic": "rag_benefits"}
+{"question": "How does BM25 ranking work?", "expected_keywords": ["BM25", "term frequency", "inverse document", "sparse"], "topic": "bm25"}
+{"question": "What is reciprocal rank fusion?", "expected_keywords": ["reciprocal", "rank", "fusion", "RRF", "hybrid"], "topic": "rrf"}
+{"question": "How should documents be chunked for RAG?", "expected_keywords": ["chunk", "split", "overlap", "size", "token"], "topic": "chunking"}
+{"question": "What is the role of embedding models in RAG?", "expected_keywords": ["embedding", "model", "vector", "semantic", "representation"], "topic": "embeddings"}
+{"question": "How does hybrid search combine vector and keyword search?", "expected_keywords": ["hybrid", "vector", "keyword", "BM25", "fusion"], "topic": "hybrid_search"}
+{"question": "What are common chunking strategies?", "expected_keywords": ["recursive", "markdown", "sentence", "token", "overlap"], "topic": "chunking_strategies"}
+{"question": "How do you evaluate retrieval quality?", "expected_keywords": ["precision", "recall", "MRR", "relevance", "metric"], "topic": "retrieval_eval"}
+{"question": "What is semantic search?", "expected_keywords": ["semantic", "meaning", "vector", "embedding", "similarity"], "topic": "semantic_search"}
+{"question": "How does dense retrieval differ from sparse retrieval?", "expected_keywords": ["dense", "sparse", "vector", "BM25", "embedding"], "topic": "dense_vs_sparse"}
+{"question": "What are the challenges of RAG systems?", "expected_keywords": ["challenge", "chunk", "context", "hallucination", "relevance"], "topic": "rag_challenges"}
+{"question": "How do you handle multi-document queries?", "expected_keywords": ["multi", "document", "aggregation", "cross", "evidence"], "topic": "multi_doc"}
+{"question": "What is the context window limitation in LLMs?", "expected_keywords": ["context", "window", "token", "limit", "length"], "topic": "context_window"}
+{"question": "How do you reduce hallucination with RAG?", "expected_keywords": ["hallucination", "grounding", "citation", "source", "factual"], "topic": "hallucination"}
+{"question": "What embedding model works best for RAG?", "expected_keywords": ["embedding", "model", "nomic", "sentence", "transformer"], "topic": "embedding_models"}
+{"question": "How does document ingestion work in a RAG pipeline?", "expected_keywords": ["ingest", "parse", "chunk", "embed", "store"], "topic": "ingestion"}
+{"question": "What is LanceDB and how is it used for vector storage?", "expected_keywords": ["LanceDB", "vector", "store", "search", "embedded"], "topic": "lancedb"}
+{"question": "How do multi-agent research systems work?", "expected_keywords": ["agent", "pipeline", "planner", "analyst", "writer"], "topic": "multi_agent"}

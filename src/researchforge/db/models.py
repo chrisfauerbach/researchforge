@@ -36,7 +36,22 @@ CREATE TABLE IF NOT EXISTS chunk_lineage (
     char_end INTEGER
 );
 
+CREATE TABLE IF NOT EXISTS eval_results (
+    eval_id TEXT PRIMARY KEY,
+    eval_type TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    scores_json TEXT,
+    regressions_json TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_documents_file_hash ON documents(file_hash);
 CREATE INDEX IF NOT EXISTS idx_briefings_status ON briefings(status);
 CREATE INDEX IF NOT EXISTS idx_chunk_lineage_document_id ON chunk_lineage(document_id);
+CREATE INDEX IF NOT EXISTS idx_eval_results_type ON eval_results(eval_type);
 """
+
+# Columns to add to existing tables (migration-safe: ignore if already exists)
+MIGRATION_SQL = [
+    "ALTER TABLE briefings ADD COLUMN human_score INTEGER",
+    "ALTER TABLE briefings ADD COLUMN human_feedback TEXT",
+]

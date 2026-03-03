@@ -15,7 +15,39 @@
         {% if briefing.completed_at %}
         &middot; completed {{ briefing.completed_at[:16] }}
         {% endif %}
+        {% if briefing.quality_score %}
+        &middot;
+        <span class="badge badge-{% if briefing.quality_score >= 0.6 %}success{% elif briefing.quality_score >= 0.4 %}warning{% else %}error{% endif %}">
+            quality: {{ "%.2f"|format(briefing.quality_score) }}
+        </span>
+        {% endif %}
     </div>
+    {% if briefing.status == 'completed' %}
+    <div class="mt-1" style="display:flex;align-items:center;gap:0.5rem;">
+        <span class="text-sm text-muted">Rate this briefing:</span>
+        <form style="display:inline"
+              hx-post="/api/briefings/{{ briefing.briefing_id }}/score"
+              hx-target="#human-score"
+              hx-swap="innerHTML">
+            <input type="hidden" name="score" value="1">
+            <button type="submit" class="btn-sm" title="Thumbs up">+ Good</button>
+        </form>
+        <form style="display:inline"
+              hx-post="/api/briefings/{{ briefing.briefing_id }}/score"
+              hx-target="#human-score"
+              hx-swap="innerHTML">
+            <input type="hidden" name="score" value="-1">
+            <button type="submit" class="btn-sm" title="Thumbs down">- Poor</button>
+        </form>
+        <span id="human-score">
+            {% if briefing.human_score == 1 %}
+            <span class="badge badge-success">Thumbs up</span>
+            {% elif briefing.human_score == -1 %}
+            <span class="badge badge-error">Thumbs down</span>
+            {% endif %}
+        </span>
+    </div>
+    {% endif %}
 </div>
 
 {% if briefing_html %}

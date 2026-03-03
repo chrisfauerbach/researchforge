@@ -194,6 +194,61 @@ async def cmd_serve(args: argparse.Namespace) -> None:
     await server.serve()
 
 
+async def _cmd_eval(args: argparse.Namespace) -> None:
+    """Handle eval subcommands."""
+    eval_cmd = getattr(args, "eval_command", None)
+
+    if eval_cmd == "run":
+        from researchforge.eval.runner import run_full_eval
+
+        result = await run_full_eval(skip_e2e=args.skip_e2e)
+
+        if result.retrieval:
+            r = result.retrieval
+            print(
+                f"Retrieval: P@5={r.get('mean_precision_at_k', 0):.4f}, "
+                f"R@5={r.get('mean_recall_at_k', 0):.4f}, "
+                f"MRR={r.get('mean_mrr', 0):.4f}"
+            )
+
+        if result.agent_scores:
+            for role, data in result.agent_scores.items():
+                if isinstance(data, dict) and "mean_score" in data:
+                    print(f"Agent [{role}]: score={data['mean_score']:.4f}")
+
+        if result.e2e:
+            print(f"E2E: mean_score={result.e2e.get('mean_score', 0):.4f}")
+
+        if result.regressions:
+            print("\nRegressions detected:")
+            for reg in result.regressions:
+                print(
+                    f"  {reg['metric']}: {reg['current']:.4f} "
+                    f"(avg: {reg['rolling_avg']:.4f}, -{reg['drop_pct']}%)"
+                )
+
+    elif eval_cmd == "benchmark":
+        from researchforge.eval.benchmark import benchmark_models
+
+        models = [m.strip() for m in args.models.split(",")]
+        result = await benchmark_models(args.role, models)
+
+        print(f"\nBenchmark: {args.role}")
+        print(f"{'Model':<25} {'Score':>8} {'Latency':>10} {'Tokens':>8}")
+        print("-" * 55)
+        for entry in result.summary_table():
+            print(
+                f"{entry['model']:<25} "
+                f"{entry['weighted_score']:>8.4f} "
+                f"{entry['latency_ms']:>8}ms "
+                f"{entry['output_tokens']:>8}"
+            )
+
+    else:
+        print("Usage: researchforge eval {run|benchmark}", file=sys.stderr)
+        sys.exit(1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="researchforge",
@@ -228,6 +283,15 @@ def main() -> None:
     # mcp
     subparsers.add_parser("mcp", help="Start the MCP server")
 
+    # eval
+    p_eval = subparsers.add_parser("eval", help="Run evaluation suite")
+    eval_sub = p_eval.add_subparsers(dest="eval_command")
+    p_eval_run = eval_sub.add_parser("run", help="Run the full eval suite")
+    p_eval_run.add_argument("--skip-e2e", action="store_true", help="Skip end-to-end eval")
+    p_eval_bench = eval_sub.add_parser("benchmark", help="Benchmark models for an agent role")
+    p_eval_bench.add_argument("--role", required=True, help="Agent role to benchmark")
+    p_eval_bench.add_argument("--models", required=True, help="Comma-separated model list")
+
     args = parser.parse_args()
 
     commands = {
@@ -244,6 +308,8 @@ def main() -> None:
         from researchforge.mcp_server.server import mcp
 
         mcp.run(transport="stdio")
+    elif args.command == "eval":
+        asyncio.run(_cmd_eval(args))
     else:
         parser.print_help()
 
