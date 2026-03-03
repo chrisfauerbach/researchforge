@@ -33,6 +33,29 @@ def parse_markdown(path: str | Path) -> str:
     return Path(path).read_text(encoding="utf-8")
 
 
+def parse_html(path: str | Path) -> str:
+    """Extract clean text from an HTML file, stripping non-content tags."""
+    from bs4 import BeautifulSoup
+
+    raw = Path(path).read_text(encoding="utf-8", errors="replace")
+    soup = BeautifulSoup(raw, "html.parser")
+
+    # Remove non-content elements
+    for tag in soup.find_all(["script", "style", "nav", "footer", "header"]):
+        tag.decompose()
+
+    return soup.get_text(separator="\n", strip=True)
+
+
+def parse_docx(path: str | Path) -> str:
+    """Extract Markdown text from a DOCX file using mammoth."""
+    import mammoth
+
+    with open(path, "rb") as f:
+        result = mammoth.convert_to_markdown(f)
+    return result.value
+
+
 def parse_txt(path: str | Path) -> str:
     """Read a plain text file."""
     return Path(path).read_text(encoding="utf-8")
@@ -54,6 +77,8 @@ def parse_document(path: str | Path) -> tuple[str, str]:
         "pdf": parse_pdf,
         "markdown": parse_markdown,
         "txt": parse_txt,
+        "html": parse_html,
+        "docx": parse_docx,
     }
 
     parser = parsers.get(source_type)

@@ -159,7 +159,7 @@ async def ingest_directory(
 ) -> list[IngestResult]:
     """Ingest all supported files in a directory (non-recursive)."""
     dir_path = Path(dir_path)
-    supported_extensions = {".pdf", ".md", ".markdown", ".txt"}
+    supported_extensions = {".pdf", ".md", ".markdown", ".txt", ".html", ".htm", ".docx"}
     results = []
 
     for file_path in sorted(dir_path.iterdir()):

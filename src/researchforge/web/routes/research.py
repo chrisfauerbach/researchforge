@@ -212,6 +212,19 @@ async def _run_pipeline_with_events(
             pipeline_trace=trace,
         )
 
+        # Corpus feedback loop
+        try:
+            from researchforge.rag.feedback import maybe_ingest_briefing
+            from researchforge.rag.store import VectorStore
+
+            critic_verdict = state_update.get("critic_verdict")
+            feedback_store = VectorStore()
+            await maybe_ingest_briefing(
+                job_id, repo, feedback_store, critic_verdict=critic_verdict
+            )
+        except Exception as fb_exc:
+            logger.warning("feedback_loop_error", job_id=job_id, error=str(fb_exc))
+
         await event_bus.publish_complete(job_id, briefing_id=job_id)
 
     except Exception as exc:

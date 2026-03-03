@@ -83,7 +83,7 @@ async def ingest_upload(request: Request, file: UploadFile = File(...)):
     from researchforge.rag.ingest import ingest_file
     from researchforge.rag.store import VectorStore
 
-    supported = {".pdf", ".md", ".markdown", ".txt", ".html"}
+    supported = {".pdf", ".md", ".markdown", ".txt", ".html", ".htm", ".docx"}
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in supported:
         return HTMLResponse(

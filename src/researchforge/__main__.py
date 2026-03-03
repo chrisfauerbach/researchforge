@@ -124,6 +124,31 @@ async def cmd_research(args: argparse.Namespace) -> None:
             pipeline_trace=trace,
         )
 
+        # Corpus feedback loop
+        critic_verdict = None
+        for entry in trace:
+            if entry.get("agent") == "critic":
+                critic_verdict = entry.get("verdict")
+                break
+
+        try:
+            from researchforge.rag.feedback import maybe_ingest_briefing
+            from researchforge.rag.store import VectorStore
+
+            feedback_store = VectorStore()
+            feedback_result = await maybe_ingest_briefing(
+                pipeline_id, repo, feedback_store, critic_verdict=critic_verdict
+            )
+            if args.verbose:
+                print(
+                    f"[Feedback] score={feedback_result['quality_score']}, "
+                    f"ingested={feedback_result['ingested']}",
+                    file=sys.stderr,
+                )
+        except Exception as fb_exc:
+            if args.verbose:
+                print(f"[Feedback] Error: {fb_exc}", file=sys.stderr)
+
         # Output the briefing
         if briefing:
             print(briefing)
@@ -216,8 +241,9 @@ def main() -> None:
     if handler:
         asyncio.run(handler(args))
     elif args.command == "mcp":
-        print("MCP server not yet implemented (Phase 4).", file=sys.stderr)
-        sys.exit(1)
+        from researchforge.mcp_server.server import mcp
+
+        mcp.run(transport="stdio")
     else:
         parser.print_help()
 
