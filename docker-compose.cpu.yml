@@ -1,0 +1,8 @@
+# Override for CPU-only hosts (no NVIDIA GPU).
+# Usage: docker compose -f docker-compose.yml -f docker-compose.cpu.yml up -d
+services:
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices: []

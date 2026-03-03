@@ -1,0 +1,60 @@
+# ResearchForge Configuration
+
+ollama:
+  base_url: "http://ollama:11434"
+  request_timeout_seconds: 120
+  keep_alive: "5m"
+
+models:
+  planner: "deepseek-r1:14b"
+  gatherer: "qwen2.5:7b"
+  analyst: "qwen2.5:14b"
+  critic: "deepseek-r1:7b"
+  writer: "mistral-nemo:12b"
+  embedding: "nomic-embed-text"
+  eval_judge: "qwen2.5:14b"
+  researcher: "qwen2.5:14b"
+
+  fallbacks:
+    planner: "qwen2.5:7b"
+    analyst: "qwen2.5:7b"
+    critic: "qwen2.5:7b"
+    writer: "qwen2.5:7b"
+
+chunking:
+  chunk_size: 1500
+  chunk_overlap: 200
+  separators:
+    - "\n\n"
+    - "\n"
+    - ". "
+    - " "
+
+retrieval:
+  vector_candidates: 20
+  bm25_candidates: 20
+  final_top_k: 5
+  embedding_prefix_document: "search_document: "
+  embedding_prefix_query: "search_query: "
+
+pipeline:
+  max_critic_retries: 2
+  quality_threshold_for_corpus: 0.6
+  max_concurrent_pipelines: 1
+
+storage:
+  data_dir: "./data"
+  vector_db_path: "./data/lancedb"
+  metadata_db_path: "./data/metadata.db"
+  checkpoints_db_path: "./data/checkpoints.db"
+  briefings_dir: "./data/briefings"
+  logs_dir: "./logs"
+
+web:
+  host: "0.0.0.0"
+  port: 8000
+
+mcp:
+  transport: "stdio"
+  sse_host: "0.0.0.0"
+  sse_port: 8001
