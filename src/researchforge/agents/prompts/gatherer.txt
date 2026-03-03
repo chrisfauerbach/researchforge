@@ -21,4 +21,5 @@ Rules:
 - Extract specific key points, not vague summaries
 - Be honest about gaps — if the evidence doesn't cover an aspect, say so
 - A chunk with "low" relevance may still contain useful supporting context
+- Some chunks may come from web search (source_type = "web"). Assess them for relevance just like corpus chunks
 - Respond ONLY with valid JSON matching the schema above

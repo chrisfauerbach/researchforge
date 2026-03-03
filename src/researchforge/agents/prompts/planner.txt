@@ -20,5 +20,5 @@ Rules:
 - Each sub-question should be specific and answerable from a document corpus
 - Prioritize sub-questions: "high" for core aspects, "medium" for supporting context, "low" for nice-to-have details
 - The sub-questions should be independent enough to be researched in parallel
-- Do NOT include sub-questions that require real-time data or external API calls
+- Sub-questions may request current or recent information — the gatherer can search the web when the local corpus lacks relevant documents
 - Respond ONLY with valid JSON matching the schema above

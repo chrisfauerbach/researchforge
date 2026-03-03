@@ -61,6 +61,13 @@ class StorageConfig(BaseSettings):
     logs_dir: str = "./logs"
 
 
+class WebSearchConfig(BaseSettings):
+    mode: str = "auto"  # "auto" | "always" | "disabled"
+    max_results: int = 3
+    max_page_chars: int = 8000
+    fetch_timeout_seconds: int = 15
+
+
 class WebConfig(BaseSettings):
     host: str = "0.0.0.0"
     port: int = 8000
@@ -84,6 +91,7 @@ class Settings(BaseSettings):
     retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
     pipeline: PipelineConfig = Field(default_factory=PipelineConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
+    web_search: WebSearchConfig = Field(default_factory=WebSearchConfig)
     web: WebConfig = Field(default_factory=WebConfig)
     mcp: McpConfig = Field(default_factory=McpConfig)
 

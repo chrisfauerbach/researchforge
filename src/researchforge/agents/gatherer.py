@@ -10,9 +10,10 @@ import structlog
 from researchforge.agents.ollama_client import ollama_chat
 from researchforge.agents.prompts import load_prompt
 from researchforge.agents.state import PipelineState, add_trace_entry
-from researchforge.config import get_settings
+from researchforge.config import WebSearchConfig, get_settings
 from researchforge.rag.retriever import retrieve
 from researchforge.rag.store import VectorStore
+from researchforge.rag.web_search import web_search_for_question
 
 logger = structlog.get_logger()
 
@@ -36,14 +37,27 @@ async def _gather_for_sub_question(
     store: VectorStore,
     system_prompt: str,
     model: str,
+    web_search_cfg: WebSearchConfig | None = None,
 ) -> dict:
     """Retrieve evidence and assess it for a single sub-question."""
     question = sub_q["question"]
 
-    # Retrieve relevant chunks
+    # Retrieve relevant chunks from local corpus
     chunks = await retrieve(question, store)
 
-    if not chunks:
+    # Optionally supplement with web search
+    web_chunks: list[dict] = []
+    if web_search_cfg is not None:
+        should_search = (
+            web_search_cfg.mode == "always"
+            or (web_search_cfg.mode == "auto" and not chunks)
+        )
+        if should_search:
+            web_chunks = await web_search_for_question(question, cfg=web_search_cfg)
+
+    all_chunks = chunks + web_chunks
+
+    if not all_chunks:
         return {
             "sub_question_id": sub_q["id"],
             "sub_question": question,
@@ -56,7 +70,7 @@ async def _gather_for_sub_question(
         }
 
     # Ask the gatherer model to assess relevance
-    chunks_text = _format_chunks_for_prompt(chunks)
+    chunks_text = _format_chunks_for_prompt(all_chunks)
     user_message = (
         f"Sub-question: {question}\n\n"
         f"Retrieved chunks:\n\n{chunks_text}"
@@ -73,7 +87,7 @@ async def _gather_for_sub_question(
     return {
         "sub_question_id": sub_q["id"],
         "sub_question": question,
-        "chunks": chunks,
+        "chunks": all_chunks,
         "assessment": result["parsed"],
         "model_result": result,
     }
@@ -92,13 +106,17 @@ async def run_gatherer(state: PipelineState) -> dict:
     system_prompt = load_prompt("gatherer")
     store = VectorStore()
 
+    web_search_cfg = (
+        None if settings.web_search.mode == "disabled" else settings.web_search
+    )
+
     logger.info("gatherer_start", model=model, sub_questions=len(sub_questions))
     start = time.monotonic()
 
     try:
         # Retrieve evidence for all sub-questions in parallel
         tasks = [
-            _gather_for_sub_question(sq, store, system_prompt, model)
+            _gather_for_sub_question(sq, store, system_prompt, model, web_search_cfg)
             for sq in sub_questions
         ]
         results = await asyncio.gather(*tasks, return_exceptions=True)
