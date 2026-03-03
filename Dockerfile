@@ -8,16 +8,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies first (layer caching)
+# Copy source and config
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir .
-
-# Copy application source
 COPY src/ src/
 COPY scripts/ scripts/
+COPY eval/ eval/
 
-# Re-install in editable mode now that source is present
-RUN pip install --no-cache-dir -e ".[all]"
+# Install package with all extras
+RUN pip install --no-cache-dir ".[all]"
 
 # Create data and log directories
 RUN mkdir -p data logs eval/datasets eval/results
