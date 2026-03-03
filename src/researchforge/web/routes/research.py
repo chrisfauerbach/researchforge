@@ -125,6 +125,51 @@ async def list_pipelines(request: Request):
     return HTMLResponse(cards_html)
 
 
+@router.get("/api/pipelines/{job_id}/card", response_class=HTMLResponse)
+async def pipeline_card(request: Request, job_id: str):
+    """Return the current pipeline card HTML for a given job."""
+    templates = get_templates()
+    info = _active_pipelines.get(job_id)
+    if info:
+        return templates.TemplateResponse(
+            "partials/pipeline_card.html",
+            {
+                "request": request,
+                "job_id": job_id,
+                "question": info["question"],
+                "status": info["status"],
+                "completed_stages": info.get("completed_stages", []),
+                "current_stage": info.get("current_stage"),
+                "error_stages": info.get("error_stages", []),
+                "briefing_id": job_id if info["status"] == "completed" else None,
+            },
+        )
+    # Fall back to DB
+    repo = await get_repo()
+    briefing = await repo.get_briefing(job_id)
+    if briefing:
+        return templates.TemplateResponse(
+            "partials/pipeline_card.html",
+            {
+                "request": request,
+                "job_id": job_id,
+                "question": briefing["research_question"],
+                "status": briefing["status"],
+                "completed_stages": (
+                    ["planner", "gatherer", "analyst", "critic", "writer"]
+                    if briefing["status"] == "completed"
+                    else []
+                ),
+                "current_stage": None,
+                "error_stages": [],
+                "briefing_id": (
+                    job_id if briefing["status"] == "completed" else None
+                ),
+            },
+        )
+    return HTMLResponse('<div class="card">Pipeline not found.</div>')
+
+
 @router.get("/api/pipelines/{job_id}/stream")
 async def stream_pipeline(job_id: str):
     """SSE stream for pipeline progress events."""

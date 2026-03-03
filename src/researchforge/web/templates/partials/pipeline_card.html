@@ -3,8 +3,9 @@
      {% if status == 'running' %}
      hx-ext="sse"
      sse-connect="/api/pipelines/{{ job_id }}/stream"
-     sse-swap="stage_update"
-     sse-close="pipeline_complete"
+     hx-get="/api/pipelines/{{ job_id }}/card"
+     hx-trigger="sse:stage_update"
+     hx-swap="outerHTML"
      {% endif %}>
     <h3>{{ question|truncate(80) }}</h3>
     <div class="pipeline-stages">

@@ -67,6 +67,13 @@ all = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+researchforge = [
+    "web/templates/**/*.html",
+    "web/static/**/*",
+    "agents/prompts/*.txt",
+]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 markers = [
