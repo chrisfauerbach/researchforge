@@ -80,48 +80,73 @@ async def cmd_search(args: argparse.Namespace) -> None:
 
 
 async def cmd_research(args: argparse.Namespace) -> None:
-    """Run a research query: retrieve context + generate briefing."""
-    from researchforge.agents.researcher import research
+    """Run the full multi-agent research pipeline."""
+
+    from researchforge.agents.graph import run_pipeline
     from researchforge.config import get_settings
     from researchforge.db.repository import Repository
-    from researchforge.rag.retriever import retrieve
-    from researchforge.rag.store import VectorStore
 
     settings = get_settings()
-    store = VectorStore()
+    depth = getattr(args, "depth", "standard")
+    pipeline_id = str(uuid.uuid4())
+
     repo = Repository(settings.storage.metadata_db_path)
     await repo.initialize()
 
     try:
-        # Retrieve relevant context
         if args.verbose:
-            print("[Retriever] Searching corpus...", file=sys.stderr)
-        chunks = await retrieve(args.question, store)
+            agents = "Planner → Gatherer → Analyst → Writer"
+            if depth == "standard":
+                agents = "Planner → Gatherer → Analyst → Critic → Writer"
+            print(
+                f"[Pipeline] Starting {depth} research pipeline ({agents})",
+                file=sys.stderr,
+            )
 
-        if not chunks:
-            print("No relevant documents found in the corpus. Ingest some documents first.")
-            return
+        # Run the full pipeline
+        final_state = await run_pipeline(
+            args.question, depth=depth, pipeline_id=pipeline_id
+        )
 
-        if args.verbose:
-            print(f"[Retriever] Found {len(chunks)} relevant chunks.", file=sys.stderr)
-
-        # Generate briefing
-        if args.verbose:
-            model = settings.models.researcher
-            print(f"[Researcher] Generating briefing with {model}...", file=sys.stderr)
-
-        briefing = await research(args.question, chunks)
+        briefing = final_state.get("briefing", "")
+        status = final_state.get("status", "unknown")
+        trace = final_state.get("trace", [])
+        errors = final_state.get("errors", [])
 
         # Store briefing in DB
-        briefing_id = str(uuid.uuid4())
-        await repo.insert_briefing(briefing_id, args.question, status="completed")
-        await repo.update_briefing(briefing_id, briefing_markdown=briefing, status="completed")
+        await repo.insert_briefing(
+            pipeline_id, args.question, status=status
+        )
+        await repo.update_briefing(
+            pipeline_id,
+            briefing_markdown=briefing,
+            status=status,
+            pipeline_trace=trace,
+        )
 
-        # Output
-        print(briefing)
+        # Output the briefing
+        if briefing:
+            print(briefing)
+        else:
+            print("Pipeline completed but no briefing was generated.", file=sys.stderr)
 
         if args.verbose:
-            print(f"\n[Briefing ID: {briefing_id}]", file=sys.stderr)
+            print(f"\n[Pipeline ID: {pipeline_id}]", file=sys.stderr)
+            print(f"[Status: {status}]", file=sys.stderr)
+            for entry in trace:
+                agent = entry.get("agent", "?")
+                model = entry.get("model", "?")
+                dur = entry.get("duration_ms", 0)
+                st = entry.get("status", "?")
+                fb = " (fallback)" if entry.get("fallback_used") else ""
+                print(
+                    f"  [{agent}] {model}{fb} — {dur}ms — {st}",
+                    file=sys.stderr,
+                )
+            if errors:
+                print(f"[Errors: {len(errors)}]", file=sys.stderr)
+                for e in errors:
+                    print(f"  - {e}", file=sys.stderr)
     finally:
         await repo.close()
 
@@ -163,6 +188,12 @@ def main() -> None:
     # research
     p_research = subparsers.add_parser("research", help="Research a question")
     p_research.add_argument("question", help="Research question")
+    p_research.add_argument(
+        "--depth",
+        choices=["standard", "quick"],
+        default="standard",
+        help="Pipeline depth: 'standard' (with critic) or 'quick' (skip critic)",
+    )
     p_research.add_argument("--verbose", "-v", action="store_true", help="Show progress")
 
     # serve
