@@ -12,7 +12,7 @@
         {% for stage_name in ['planner', 'gatherer', 'analyst', 'critic', 'writer'] %}
         <span class="stage
             {% if stage_name in completed_stages %}done{% endif %}
-            {% if stage_name == current_stage %}active{% endif %}
+            {% if stage_name == current_stage and stage_name not in completed_stages %}active{% endif %}
             {% if stage_name in error_stages %}error{% endif %}">
             {% if stage_name in completed_stages %}&#10003;{% elif stage_name == current_stage %}&#9711;{% else %}&#183;{% endif %}
             {{ stage_name|capitalize }}

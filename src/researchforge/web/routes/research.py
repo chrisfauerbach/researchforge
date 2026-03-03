@@ -242,6 +242,7 @@ async def _run_pipeline_with_events(
         # Pipeline finished — get final state
         info = _active_pipelines.get(job_id, {})
         info["status"] = "completed"
+        info["current_stage"] = None
 
         # Update DB with final briefing
         # The pipeline already wrote to state, we need to fetch it
